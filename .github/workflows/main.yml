@@ -37,6 +37,6 @@ jobs:
       #    publish_dir: ./
       #    publish_branch: ip_derper
       - uses: eunchurn/action-publish@v1.1.1
-        env:    
-          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH_NAME: 'ip_derp' #optional defaults to master
