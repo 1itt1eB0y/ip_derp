@@ -18,9 +18,12 @@ env:
 
 
 jobs:
+  build:
   # Modify Derp Cert to Disable ServerName Check
-  deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: sudosubin/git-clone-action@v1.0.1
         with:
@@ -50,14 +53,6 @@ jobs:
           BRANCH_NAME: 'ip_derp' #optional defaults to master
 
   # Build and publish the Docker image
-  build:
-
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
       - 
         name: Checkout repository
         uses: actions/checkout@v2
