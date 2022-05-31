@@ -1,0 +1,113 @@
+name: Build and Publish Docker Image
+
+# refer to https://github.com/actions/starter-workflows/blob/main/ci/docker-publish.yml 
+
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the main branch
+  workflow_dispatch:
+  push:
+    branches:
+      - ip_derp
+
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: docker.io
+  # <repo>
+  IMAGE_NAME: ${{ github.event.repository.name }}
+
+
+jobs:
+  # Modify Derp Cert to Disable ServerName Check
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: sudosubin/git-clone-action@v1.0.1
+        with:
+          repository: '1itt1eB0y/ip_derper'
+          platform: 'github'
+          ref: 'ip_derp'
+
+      - name: modify
+        run: |
+          cd ..
+          git clone -b main https://github.com/tailscale/tailscale --depth 1
+          cd tailscale
+          rm -rf .git*
+          sed -i '/hi.ServerName != m.hostname/,+2d' cmd/derper/cert.go
+          cd ../ip_derper
+          cp -rf ../tailscale/* .
+          
+      #- name: Deploy
+      #  uses: peaceiris/actions-gh-pages@v3
+      #  with:
+      #    github_token: ${{ secrets.GITHUB_TOKEN }}
+      #    publish_dir: ./
+      #    publish_branch: ip_derper
+      - uses: eunchurn/action-publish@v1.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: 'ip_derp' #optional defaults to master
+
+  # Build and publish the Docker image
+  build:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - 
+        name: Checkout repository
+        uses: actions/checkout@v2
+
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      # Login against a Docker registry except on PR
+      # https://github.com/docker/login-action
+      - 
+        name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - 
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - 
+        name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ secrets.DOCKER_HUB_USER }}/${{ env.IMAGE_NAME }}
+
+      - 
+        name: Get Time
+        id: time
+        uses: nanzm/get-time-action@v1.1
+        with:
+          timeZone: 8
+          format: 'YYYY-MM-DD-HH-mm-ss'
+
+      # Build and push Docker image with Buildx (don't push on PR)
+      # https://github.com/docker/build-push-action
+      - 
+        name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ steps.meta.outputs.tags }}-${{ steps.time.outputs.time }}
+            adobe17/ip_derp:latest
+          labels: ${{ steps.meta.outputs.labels }}
