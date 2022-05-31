@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: sudosubin/git-clone-action@v1.0.1
         with:
-          repository: '1itt1eB0y/ip_derper'
+          repository: '1itt1eB0y/ip_derp'
           platform: 'github'
           ref: 'ip_derp'
 
@@ -35,7 +35,7 @@ jobs:
           cd tailscale
           rm -rf .git*
           sed -i '/hi.ServerName != m.hostname/,+2d' cmd/derper/cert.go
-          cd ../ip_derper
+          cd ../ip_derp
           cp -rf ../tailscale/* .
           
       #- name: Deploy
