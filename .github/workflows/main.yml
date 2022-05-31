@@ -23,12 +23,12 @@ jobs:
       - name: modify
         run: |
           cd ..
-          git clone -b main https://github.com/tailscale/tailscale ip_derp_origin --depth 1
-          cd ip_derper_origin
+          git clone -b main https://github.com/tailscale/tailscale --depth 1
+          cd tailscale
           rm -rf .git*
           sed -i '/hi.ServerName != m.hostname/,+2d' cmd/derper/cert.go
           cd ../ip_derper
-          cp -rf ../ip_derp_origin/* .
+          cp -rf ../tailscale/* .
           
       #- name: Deploy
       #  uses: peaceiris/actions-gh-pages@v3
