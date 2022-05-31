@@ -27,7 +27,7 @@ jobs:
           cd ip_derper_origin
           rm -rf .git*
           sed -i '/hi.ServerName != m.hostname/,+2d' cmd/derper/cert.go
-          cd ../ip_derp
+          cd ../ip_derper
           cp -rf ../ip_derp_origin/* .
           
       #- name: Deploy
