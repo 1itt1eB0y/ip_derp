@@ -16,19 +16,19 @@ jobs:
     steps:
       - uses: sudosubin/git-clone-action@v1.0.1
         with:
-          repository: 'yangchuansheng/ip_derper'
+          repository: '1itt1eB0y/ip_derper'
           platform: 'github'
-          ref: 'ip_derper'
+          ref: 'ip_derp'
 
       - name: modify
         run: |
           cd ..
-          git clone -b main https://github.com/tailscale/tailscale ip_derper_origin --depth 1
+          git clone -b main https://github.com/tailscale/tailscale ip_derp_origin --depth 1
           cd ip_derper_origin
           rm -rf .git*
           sed -i '/hi.ServerName != m.hostname/,+2d' cmd/derper/cert.go
-          cd ../ip_derper
-          cp -rf ../ip_derper_origin/* .
+          cd ../ip_derp
+          cp -rf ../ip_derp_origin/* .
           
       #- name: Deploy
       #  uses: peaceiris/actions-gh-pages@v3
@@ -38,7 +38,5 @@ jobs:
       #    publish_branch: ip_derper
       - uses: eunchurn/action-publish@v1.1.1
         env:    
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH_NAME: 'ip_derper' #optional defaults to master
-          USER_NAME: 'me' #optional defaults to "Automated publisher"
-          USER_EMAIL: 'actions@users.noreply.github.com' #optional defaults to "actions@users.noreply.github.com"
+          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: 'ip_derp' #optional defaults to master
