@@ -1,13 +1,13 @@
 FROM golang:latest AS builder
 
-LABEL org.opencontainers.image.source https://github.com/yangchuansheng/ip_derper
+LABEL org.opencontainers.image.source https://github.com/1itt1eB0y/ip_derp
 
 WORKDIR /app
 
 # ========= CONFIG =========
 # - download links
-ENV MODIFIED_DERPER_GIT=https://github.com/yangchuansheng/ip_derper.git
-ENV BRANCH=ip_derper
+ENV MODIFIED_DERPER_GIT=https://github.com/1itt1eB0y/ip_derp.git
+ENV BRANCH=ip_derp
 # ==========================
 
 # build modified derper
