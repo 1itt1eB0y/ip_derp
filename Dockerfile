@@ -1,4 +1,4 @@
-FROM golang:latest AS builder
+FROM golang:1.18-alpine AS builder
 
 LABEL org.opencontainers.image.source https://github.com/1itt1eB0y/ip_derp
 
@@ -13,8 +13,7 @@ ENV BRANCH=ip_derp
 # build modified derper
 RUN git clone -b $BRANCH $MODIFIED_DERPER_GIT tailscale --depth 1
 RUN cd /app/tailscale/cmd/derper 
-RUN go mod init
-RUN go build -ldflags "-s -w" -o /app/derper 
+RUN go build -buildvcs=false -ldflags "-s -w" -o /app/derper 
 RUN cd /app 
 RUN rm -rf /app/tailscale
 
