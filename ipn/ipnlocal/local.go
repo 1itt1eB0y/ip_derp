@@ -425,6 +425,20 @@ func (b *LocalBackend) updateStatus(sb *ipnstate.StatusBuilder, extraLocked func
 			s.CurrentTailnet.MagicDNSSuffix = b.netMap.MagicDNSSuffix()
 			s.CurrentTailnet.MagicDNSEnabled = b.netMap.DNS.Proxied
 			s.CurrentTailnet.Name = b.netMap.Domain
+			if b.prefs != nil && !b.prefs.ExitNodeID.IsZero() {
+				if exitPeer, ok := b.netMap.PeerWithStableID(b.prefs.ExitNodeID); ok {
+					var online = false
+					if exitPeer.Online != nil {
+						online = *exitPeer.Online
+					}
+					s.ExitNodeStatus = &ipnstate.ExitNodeStatus{
+						ID:           b.prefs.ExitNodeID,
+						Online:       online,
+						TailscaleIPs: exitPeer.Addresses,
+					}
+				}
+
+			}
 		}
 	})
 	sb.MutateSelfStatus(func(ss *ipnstate.PeerStatus) {
@@ -1035,7 +1049,7 @@ func (b *LocalBackend) Start(opts ipn.Options) error {
 		DiscoPublicKey:       discoPublic,
 		DebugFlags:           debugFlags,
 		LinkMonitor:          b.e.GetLinkMonitor(),
-		Pinger:               b.e,
+		Pinger:               b,
 		PopBrowserURL:        b.tellClientToBrowseToURL,
 		Dialer:               b.Dialer(),
 
@@ -1833,7 +1847,10 @@ func (b *LocalBackend) checkPrefsLocked(p *ipn.Prefs) error {
 	if p.RunSSH {
 		switch runtime.GOOS {
 		case "linux":
-			// okay
+			if distro.Get() == distro.Synology && !envknob.UseWIPCode() {
+				return errors.New("The Tailscale SSH server does not run on Synology.")
+			}
+			// otherwise okay
 		case "darwin":
 			// okay only in tailscaled mode for now.
 			if version.IsSandboxedMacOS() {
@@ -2680,12 +2697,14 @@ func (b *LocalBackend) enterState(newState ipn.State) {
 	b.maybePauseControlClientLocked()
 	b.mu.Unlock()
 
+	// prefs may change irrespective of state; WantRunning should be explicitly
+	// set before potential early return even if the state is unchanged.
+	health.SetIPNState(newState.String(), prefs.WantRunning)
 	if oldState == newState {
 		return
 	}
 	b.logf("Switching ipn state %v -> %v (WantRunning=%v, nm=%v)",
 		oldState, newState, prefs.WantRunning, netMap != nil)
-	health.SetIPNState(newState.String(), prefs.WantRunning)
 	b.send(ipn.Notify{State: &newState})
 
 	switch newState {
@@ -3089,7 +3108,7 @@ func (b *LocalBackend) FileTargets() ([]*apitype.FileTarget, error) {
 	defer b.mu.Unlock()
 	nm := b.netMap
 	if b.state != ipn.Running || nm == nil {
-		return nil, errors.New("not connected")
+		return nil, errors.New("not connected to the tailnet")
 	}
 	if !b.capFileSharing {
 		return nil, errors.New("file sharing not enabled by Tailscale admin")

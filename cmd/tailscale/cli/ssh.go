@@ -21,6 +21,8 @@ import (
 	"inet.af/netaddr"
 	"tailscale.com/envknob"
 	"tailscale.com/ipn/ipnstate"
+	"tailscale.com/net/tsaddr"
+	"tailscale.com/version"
 )
 
 var sshCmd = &ffcli.Command{
@@ -31,6 +33,9 @@ var sshCmd = &ffcli.Command{
 }
 
 func runSSH(ctx context.Context, args []string) error {
+	if runtime.GOOS == "darwin" && version.IsSandboxedMacOS() && !envknob.UseWIPCode() {
+		return errors.New("The 'tailscale ssh' subcommand is not available on sandboxed macOS builds.\nUse the regular 'ssh' client instead.")
+	}
 	if len(args) == 0 {
 		return errors.New("usage: ssh [user@]<host>")
 	}
@@ -178,4 +183,29 @@ func nodeDNSNameFromArg(st *ipnstate.Status, arg string) (dnsName string, ok boo
 		}
 	}
 	return "", false
+}
+
+// getSSHClientEnvVar returns the "SSH_CLIENT" environment variable
+// for the current process group, if any.
+var getSSHClientEnvVar = func() string {
+	return ""
+}
+
+// isSSHOverTailscale checks if the invocation is in a SSH session over Tailscale.
+// It is used to detect if the user is about to take an action that might result in them
+// disconnecting from the machine (e.g. disabling SSH)
+func isSSHOverTailscale() bool {
+	sshClient := getSSHClientEnvVar()
+	if sshClient == "" {
+		return false
+	}
+	ipStr, _, ok := strings.Cut(sshClient, " ")
+	if !ok {
+		return false
+	}
+	ip, err := netaddr.ParseIP(ipStr)
+	if err != nil {
+		return false
+	}
+	return tsaddr.IsTailscaleIP(ip)
 }

@@ -475,6 +475,16 @@ type Hostinfo struct {
 	//       require changes to Hostinfo.Equal.
 }
 
+// TailscaleSSHEnabled reports whether or not this node is acting as a
+// Tailscale SSH server.
+func (hi *Hostinfo) TailscaleSSHEnabled() bool {
+	// Currently, we use `SSH_HostKeys` as a proxy for this. However, we may later
+	// include non-Tailscale host keys, and will add a separate flag to rely on.
+	return hi != nil && len(hi.SSH_HostKeys) > 0
+}
+
+func (v HostinfoView) TailscaleSSHEnabled() bool { return v.ж.TailscaleSSHEnabled() }
+
 // NetInfo contains information about the host's network state.
 type NetInfo struct {
 	// MappingVariesByDestIP says whether the host's NAT mappings
