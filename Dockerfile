@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine AS builder
+FROM golang:latest AS builder
 
 LABEL org.opencontainers.image.source https://github.com/1itt1eB0y/ip_derp
 
