@@ -13,7 +13,7 @@ ENV BRANCH=ip_derp
 # build modified derper
 RUN git clone -b $BRANCH $MODIFIED_DERPER_GIT tailscale --depth 1
 RUN cd /app/tailscale/cmd/derper 
-RUN go build -buildvcs=false -ldflags "-s -w" -o /app/derper 
+RUN /usr/local/go/bin/go build -buildvcs=false -ldflags "-s -w" -o /app/derper 
 RUN cd /app 
 RUN rm -rf /app/tailscale
 
